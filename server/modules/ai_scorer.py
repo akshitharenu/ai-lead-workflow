@@ -85,8 +85,10 @@ Return ONLY a JSON object with these fields:
     for attempt in range(2):
         try:
             if settings.ANTHROPIC_API_KEY:
+                logger.info("Using Anthropic Claude for scoring")
                 result = _generate_with_anthropic(user_prompt)
             else:
+                logger.info("Using Google Gemini for scoring (Claude key not found)")
                 result = _generate_with_gemini(user_prompt)
 
             if result:

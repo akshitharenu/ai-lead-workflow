@@ -58,8 +58,10 @@ Respond with ONLY the email body. No subject line, no placeholders like [Your Na
     for attempt in range(2):
         try:
             if settings.ANTHROPIC_API_KEY:
+                logger.info("Using Anthropic Claude for response generation")
                 return _generate_with_anthropic(user_prompt)
             else:
+                logger.info("Using Google Gemini for response generation (Claude key not found)")
                 return _generate_with_gemini(user_prompt)
 
         except Exception as e:
