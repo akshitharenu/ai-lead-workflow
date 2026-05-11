@@ -2,6 +2,7 @@
 AI Responder — generates personalized email responses via Claude.
 """
 import anthropic
+import google.generativeai as genai
 from config.env import settings
 from config.logger import logger
 from utils.api_error import ApiError
@@ -13,8 +14,21 @@ TONE_MAP = {
 }
 
 
-def _get_client():
-    return anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+def _generate_with_anthropic(prompt: str) -> str:
+    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=300,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.content[0].text.strip()
+
+
+def _generate_with_gemini(prompt: str) -> str:
+    genai.configure(api_key=settings.GOOGLE_API_KEY)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(prompt)
+    return response.text.strip()
 
 
 def generate_response_ai(lead: dict, scoring: dict) -> str:
@@ -41,22 +55,12 @@ Tone Instructions: {tone}
 
 Respond with ONLY the email body. No subject line, no placeholders like [Your Name]. Sign off as "The AI Growth Team"."""
 
-    client = _get_client()
-
     for attempt in range(2):
         try:
-            response = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=300,
-                messages=[{"role": "user", "content": user_prompt}],
-            )
-            email_body = response.content[0].text.strip()
-
-            if email_body:
-                logger.info(
-                    f"AI Generated response for tier: {scoring['tier']} ({len(email_body)} chars)"
-                )
-                return email_body
+            if settings.GOOGLE_API_KEY:
+                return _generate_with_gemini(user_prompt)
+            else:
+                return _generate_with_anthropic(user_prompt)
 
         except Exception as e:
             logger.error(f"AI Responder request failed (attempt {attempt + 1}): {e}")

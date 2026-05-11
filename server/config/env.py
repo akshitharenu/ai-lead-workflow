@@ -10,8 +10,16 @@ from dotenv import load_dotenv
 env_path = Path(__file__).resolve().parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
-REQUIRED_KEYS = ["ANTHROPIC_API_KEY", "PORT", "DATABASE_PATH", "JWT_SECRET"]
+REQUIRED_KEYS = ["PORT", "DATABASE_PATH", "JWT_SECRET"]
 missing = [k for k in REQUIRED_KEYS if not os.getenv(k)]
+
+# Check for at least one AI key
+anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+google_key = os.getenv("GOOGLE_API_KEY")
+
+if not anthropic_key and not google_key:
+    raise RuntimeError("CRITICAL STARTUP ERROR: Missing AI API Key. Provide either ANTHROPIC_API_KEY or GOOGLE_API_KEY.")
+
 if missing:
     raise RuntimeError(f"CRITICAL STARTUP ERROR: Missing required env vars: {', '.join(missing)}")
 
@@ -20,6 +28,7 @@ class _Settings:
     """Frozen config object."""
     def __init__(self):
         self.ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+        self.GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
         self.USE_MOCK_AI = os.getenv("USE_MOCK_AI", "false").lower() == "true"
         self.PORT = int(os.getenv("PORT", "3001"))
         self.NODE_ENV = os.getenv("NODE_ENV", "development")
