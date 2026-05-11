@@ -7,16 +7,31 @@ from config.logger import logger
 from modules.orchestrator import run_pipeline
 from modules.crm import CRM
 from utils.api_error import ApiError
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+
+class LeadCreate(BaseModel):
+    firstName: str
+    lastName: str
+    email: str
+    company: str
+    interest: str
+    role: Optional[str] = None
+    message: Optional[str] = None
 
 router = APIRouter()
 
 
 @router.post("")
-async def create_lead(request: Request):
+async def create_lead(lead_in: LeadCreate):
     """Run the full AI pipeline on a new lead submission."""
-    body = await request.json()
     db = get_db()
     try:
+        # Convert pydantic model to dict for the pipeline
+        body = lead_in.model_dump()
+        # Ensure it has 'name' for the legacy pipeline parts
+        body['name'] = f"{body['firstName']} {body['lastName']}"
+        
         result = run_pipeline(body, db)
         return result
     except ApiError as e:

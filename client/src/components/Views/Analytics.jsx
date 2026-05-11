@@ -6,7 +6,7 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/dashboard/stats')
+    fetch('/api/dashboard/stats')
       .then((res) => res.json())
       .then((data) => {
         setStats(data);
