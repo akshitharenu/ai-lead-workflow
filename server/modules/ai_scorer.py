@@ -29,12 +29,15 @@ def _generate_with_anthropic(user_prompt: str) -> dict:
 
 def _generate_with_gemini(user_prompt: str) -> dict:
     genai.configure(api_key=settings.GOOGLE_API_KEY)
-    model = genai.GenerativeModel(
-        "gemini-1.5-flash",
-        system_instruction=SYSTEM_PROMPT,
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")
+    
+    # Combine system prompt and user prompt for better compatibility
+    full_prompt = f"{SYSTEM_PROMPT}\n\n{user_prompt}"
+    
+    response = model.generate_content(
+        full_prompt,
         generation_config={"response_mime_type": "application/json"}
     )
-    response = model.generate_content(user_prompt)
     return parse_json_safe(response.text)
 
 

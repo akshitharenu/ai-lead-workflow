@@ -26,7 +26,7 @@ def _generate_with_anthropic(prompt: str) -> str:
 
 def _generate_with_gemini(prompt: str) -> str:
     genai.configure(api_key=settings.GOOGLE_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")
     response = model.generate_content(prompt)
     return response.text.strip()
 
