@@ -46,20 +46,33 @@ def create_app() -> FastAPI:
     # Error handlers
     register_error_handlers(app)
 
-    # Routes
+    # 1. API Routes (MUST be first)
     app.include_router(leads_router, prefix="/api/leads", tags=["Leads"])
     app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
     app.include_router(health_router, prefix="/api/health", tags=["Health"])
 
-    # Serve Static Files (Frontend)
+    # 2. Serve Static Files (Frontend)
     static_path = os.path.join(os.path.dirname(__file__), "public")
     if os.path.exists(static_path):
-        app.mount("/", StaticFiles(directory=static_path, html=True), name="static")
+        # Mount assets separately to be safe
+        assets_path = os.path.join(static_path, "assets")
+        if os.path.exists(assets_path):
+            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 
+        # Catch-all for the SPA (index.html)
         @app.get("/{full_path:path}")
         async def serve_frontend(full_path: str):
-            # If the path doesn't start with /api, serve index.html (SPA routing)
-            if not full_path.startswith("api"):
-                return FileResponse(os.path.join(static_path, "index.html"))
+            # IMPORTANT: If it's an API route that reached here, it's a real 404
+            if full_path.startswith("api"):
+                return JSONResponse(
+                    status_code=404,
+                    content={"error": "API route not found"}
+                )
+            
+            # Serve index.html for all other frontend routes
+            file_path = os.path.join(static_path, full_path)
+            if os.path.isfile(file_path):
+                return FileResponse(file_path)
+            return FileResponse(os.path.join(static_path, "index.html"))
 
     return app
