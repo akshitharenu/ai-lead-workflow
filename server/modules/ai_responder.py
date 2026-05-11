@@ -55,14 +55,21 @@ Tone Instructions: {tone}
 
 Respond with ONLY the email body. No subject line, no placeholders like [Your Name]. Sign off as "The AI Growth Team"."""
 
+    # Determine which engine to use
+    use_claude = bool(settings.ANTHROPIC_API_KEY and settings.ANTHROPIC_API_KEY.strip())
+    use_gemini = bool(settings.GOOGLE_API_KEY and settings.GOOGLE_API_KEY.strip())
+
     for attempt in range(2):
         try:
-            if settings.ANTHROPIC_API_KEY:
-                logger.info("Using Anthropic Claude for response generation")
+            if use_claude:
+                logger.info("Engine: Anthropic Claude")
                 return _generate_with_anthropic(user_prompt)
-            else:
-                logger.info("Using Google Gemini for response generation (Claude key not found)")
+            elif use_gemini:
+                logger.info("Engine: Google Gemini")
                 return _generate_with_gemini(user_prompt)
+            else:
+                logger.warning("No AI API keys found! Using fallback response.")
+                return "Thank you for your interest! We will get back to you soon."
 
         except Exception as e:
             logger.error(f"AI Responder request failed (attempt {attempt + 1}): {e}")

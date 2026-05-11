@@ -46,6 +46,19 @@ def _generate_with_gemini(user_prompt: str) -> dict:
     return parse_json_safe(text)
 
 
+def _get_mock_response(lead: dict) -> dict:
+    import random
+    score = random.randint(3, 9)
+    tier = "hot" if score >= 8 else "warm" if score >= 5 else "cold"
+    return {
+        "score": score,
+        "tier": tier,
+        "intent": random.choice(["purchase", "demo", "info", "partnership"]),
+        "summary": f"Mock summary for {lead.get('name', 'User')}.",
+        "reasoning": "Mock AI logic used (no valid API keys detected)."
+    }
+
+
 def score_lead_ai(lead: dict, enrichment: dict) -> dict:
     """
     Score a lead using Claude. Returns { score, tier, intent, summary, reasoning }.
@@ -82,14 +95,21 @@ Return ONLY a JSON object with these fields:
   "reasoning": (brief explanation of the score)
 }}"""
 
+    # Determine which engine to use
+    use_claude = bool(settings.ANTHROPIC_API_KEY and settings.ANTHROPIC_API_KEY.strip())
+    use_gemini = bool(settings.GOOGLE_API_KEY and settings.GOOGLE_API_KEY.strip())
+
     for attempt in range(2):
         try:
-            if settings.ANTHROPIC_API_KEY:
-                logger.info("Using Anthropic Claude for scoring")
+            if use_claude:
+                logger.info("Engine: Anthropic Claude")
                 result = _generate_with_anthropic(user_prompt)
-            else:
-                logger.info("Using Google Gemini for scoring (Claude key not found)")
+            elif use_gemini:
+                logger.info("Engine: Google Gemini")
                 result = _generate_with_gemini(user_prompt)
+            else:
+                logger.warning("No AI API keys found! Falling back to Mock AI.")
+                return _get_mock_response(lead)
 
             if result:
                 logger.info(f"AI Scored lead: {result.get('score')}/10, Tier: {result.get('tier')}")
