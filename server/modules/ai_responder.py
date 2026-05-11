@@ -57,10 +57,10 @@ Respond with ONLY the email body. No subject line, no placeholders like [Your Na
 
     for attempt in range(2):
         try:
-            if settings.GOOGLE_API_KEY:
-                return _generate_with_gemini(user_prompt)
-            else:
+            if settings.ANTHROPIC_API_KEY:
                 return _generate_with_anthropic(user_prompt)
+            else:
+                return _generate_with_gemini(user_prompt)
 
         except Exception as e:
             logger.error(f"AI Responder request failed (attempt {attempt + 1}): {e}")

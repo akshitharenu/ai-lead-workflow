@@ -84,10 +84,10 @@ Return ONLY a JSON object with these fields:
 
     for attempt in range(2):
         try:
-            if settings.GOOGLE_API_KEY:
-                result = _generate_with_gemini(user_prompt)
-            else:
+            if settings.ANTHROPIC_API_KEY:
                 result = _generate_with_anthropic(user_prompt)
+            else:
+                result = _generate_with_gemini(user_prompt)
 
             if result:
                 logger.info(f"AI Scored lead: {result.get('score')}/10, Tier: {result.get('tier')}")
