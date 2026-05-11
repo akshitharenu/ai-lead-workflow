@@ -120,5 +120,8 @@ Return ONLY a JSON object with these fields:
 
         except Exception as e:
             logger.error(f"AI Scorer request failed (attempt {attempt + 1}): {e}")
+            if attempt == 1:
+                logger.warning("All AI attempts failed. Falling back to Mock AI to prevent crash.")
+                return _get_mock_response(lead)
 
     raise ApiError(502, "AI scoring unavailable after retries", "AI_UNAVAILABLE")

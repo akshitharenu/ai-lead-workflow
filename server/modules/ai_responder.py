@@ -73,5 +73,8 @@ Respond with ONLY the email body. No subject line, no placeholders like [Your Na
 
         except Exception as e:
             logger.error(f"AI Responder request failed (attempt {attempt + 1}): {e}")
+            if attempt == 1:
+                logger.warning("All AI attempts failed. Using fallback response.")
+                return "Thank you for your interest! Our team will review your lead and get back to you shortly."
 
     raise ApiError(502, "AI response generation unavailable after retries", "AI_UNAVAILABLE")
