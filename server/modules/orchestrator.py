@@ -29,12 +29,21 @@ def run_pipeline(form_data: dict, db) -> dict:
             result = fn()
             duration = int((time.time() - stage_start) * 1000)
             stages[name] = {"status": "done", "durationMs": duration, "data": None}
-            CRM.log_event(temp_lead_id, name, "done", None, duration, db)
+            try:
+                CRM.log_event(temp_lead_id, name, "done", None, duration, db)
+            except Exception as le:
+                logger.error(f"Failed to log event for {name}: {le}")
             return result
         except Exception as e:
+            import traceback
             duration = int((time.time() - stage_start) * 1000)
+            error_msg = f"Stage {name} failed: {str(e)}"
+            logger.error(f"{error_msg}\n{traceback.format_exc()}")
             stages[name] = {"status": "error", "durationMs": duration, "error": str(e)}
-            CRM.log_event(temp_lead_id, name, "error", {"error": str(e)}, duration, db)
+            try:
+                CRM.log_event(temp_lead_id, name, "error", {"error": str(e)}, duration, db)
+            except:
+                pass
             raise
 
     try:

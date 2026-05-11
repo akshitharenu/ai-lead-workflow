@@ -32,7 +32,7 @@ def init_db():
             email TEXT NOT NULL,
             company TEXT NOT NULL,
             role TEXT,
-            message TEXT NOT NULL,
+            message TEXT,
             score INTEGER,
             tier TEXT,
             intent TEXT,

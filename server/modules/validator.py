@@ -42,10 +42,8 @@ def validate(data: dict) -> dict:
         errors.append("Role must not exceed 100 characters")
 
     # Message
-    if not message:
-        errors.append("Message is required")
-    elif len(message) < 10 or len(message) > 5000:
-        errors.append("Message must be between 10 and 5000 characters")
+    if message and len(message) > 5000:
+        errors.append("Message must not exceed 5000 characters")
 
     return {
         "valid": len(errors) == 0,
