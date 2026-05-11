@@ -2,6 +2,8 @@
 AI Scorer — uses Anthropic Claude to score and classify leads.
 """
 import anthropic
+import google.generativeai as genai
+import json
 from config.env import settings
 from config.logger import logger
 from utils.parse_json_safe import parse_json_safe
@@ -13,8 +15,27 @@ SYSTEM_PROMPT = (
 )
 
 
-def _get_client():
-    return anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+def _generate_with_anthropic(user_prompt: str) -> dict:
+    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=512,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    text = response.content[0].text
+    return parse_json_safe(text)
+
+
+def _generate_with_gemini(user_prompt: str) -> dict:
+    genai.configure(api_key=settings.GOOGLE_API_KEY)
+    model = genai.GenerativeModel(
+        "gemini-1.5-flash",
+        system_instruction=SYSTEM_PROMPT,
+        generation_config={"response_mime_type": "application/json"}
+    )
+    response = model.generate_content(user_prompt)
+    return parse_json_safe(response.text)
 
 
 def score_lead_ai(lead: dict, enrichment: dict) -> dict:
@@ -53,18 +74,12 @@ Return ONLY a JSON object with these fields:
   "reasoning": (brief explanation of the score)
 }}"""
 
-    client = _get_client()
-
     for attempt in range(2):
         try:
-            response = client.messages.create(
-                model="claude-3-5-sonnet-20240620",
-                max_tokens=512,
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_prompt}],
-            )
-            text = response.content[0].text
-            result = parse_json_safe(text)
+            if settings.GOOGLE_API_KEY:
+                result = _generate_with_gemini(user_prompt)
+            else:
+                result = _generate_with_anthropic(user_prompt)
 
             if result:
                 logger.info(f"AI Scored lead: {result.get('score')}/10, Tier: {result.get('tier')}")
