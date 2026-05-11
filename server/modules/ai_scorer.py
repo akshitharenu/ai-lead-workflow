@@ -29,16 +29,21 @@ def _generate_with_anthropic(user_prompt: str) -> dict:
 
 def _generate_with_gemini(user_prompt: str) -> dict:
     genai.configure(api_key=settings.GOOGLE_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash-latest")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     
-    # Combine system prompt and user prompt for better compatibility
+    # Combine system prompt and user prompt
     full_prompt = f"{SYSTEM_PROMPT}\n\n{user_prompt}"
     
-    response = model.generate_content(
-        full_prompt,
-        generation_config={"response_mime_type": "application/json"}
-    )
-    return parse_json_safe(response.text)
+    response = model.generate_content(full_prompt)
+    
+    # Manually find and parse JSON in case the AI adds markdown backticks
+    text = response.text.strip()
+    if "```json" in text:
+        text = text.split("```json")[1].split("```")[0].strip()
+    elif "```" in text:
+        text = text.split("```")[1].split("```")[0].strip()
+        
+    return parse_json_safe(text)
 
 
 def score_lead_ai(lead: dict, enrichment: dict) -> dict:
