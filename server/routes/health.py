@@ -8,7 +8,7 @@ router = APIRouter()
 _start_time = time.time()
 
 
-@router.get("/")
+@router.get("")
 async def health_check():
     """Return server health status."""
     return {

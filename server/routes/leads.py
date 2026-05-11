@@ -11,7 +11,7 @@ from utils.api_error import ApiError
 router = APIRouter()
 
 
-@router.post("/")
+@router.post("")
 async def create_lead(request: Request):
     """Run the full AI pipeline on a new lead submission."""
     body = await request.json()
@@ -35,7 +35,7 @@ async def create_lead(request: Request):
         db.close()
 
 
-@router.get("/")
+@router.get("")
 async def list_leads(
     tier: str = Query(None),
     search: str = Query(None),
