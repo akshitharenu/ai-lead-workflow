@@ -5,14 +5,16 @@ import { useEffect, useRef, useState, useCallback } from 'react';
  * Connects to a WebSocket server and provides live messages.
  * Falls back gracefully if no WebSocket server is available.
  */
-const useWebSocket = (url = 'ws://localhost:3001/ws') => {
+const useWebSocket = (url) => {
+  const defaultUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+  const finalUrl = url || defaultUrl;
   const wsRef = useRef(null);
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState([]);
 
   const connect = useCallback(() => {
     try {
-      const ws = new WebSocket(url);
+      const ws = new WebSocket(finalUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -40,7 +42,7 @@ const useWebSocket = (url = 'ws://localhost:3001/ws') => {
     } catch {
       // WebSocket not available, fail silently
     }
-  }, [url]);
+  }, [finalUrl]);
 
   const disconnect = useCallback(() => {
     if (wsRef.current) {
