@@ -11,11 +11,9 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class LeadCreate(BaseModel):
-    firstName: str
-    lastName: str
+    name: str
     email: str
     company: str
-    interest: str
     role: Optional[str] = None
     message: Optional[str] = None
 
@@ -29,8 +27,6 @@ async def create_lead(lead_in: LeadCreate):
     try:
         # Convert pydantic model to dict for the pipeline
         body = lead_in.model_dump()
-        # Ensure it has 'name' for the legacy pipeline parts
-        body['name'] = f"{body['firstName']} {body['lastName']}"
         
         result = run_pipeline(body, db)
         return result
